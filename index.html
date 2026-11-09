@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marginal mind</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-accent {
+            background: rgba(16, 185, 129, 0.08);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .tab-btn.active {
+            background-color: rgba(6, 182, 212, 0.15);
+            color: #38bdf8;
+            border-color: #0284c7;
+        }
+    </style>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased text-slate-200 bg-slate-950">
+
+    <!-- Шапка & Навигация по 4 страницам -->
+    <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-tr from-cyan-500 to-emerald-400 p-2.5 rounded-xl shadow-lg text-slate-950 font-black text-xl">
+                        ₸
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight text-white flex items-center gap-2">
+                            Marginal mind
+                            <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-normal">4 Страницы Аналитики</span>
+                        </h1>
+                        <p class="text-xs text-slate-400 hidden sm:block">Баға, сұраныс және пайда көрсеткіштерін модельдеу</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="languageSelect" aria-label="Language" class="bg-slate-800 text-white border border-slate-700 rounded-lg px-2 py-1.5 text-xs"><option value="ru">Русский</option><option value="kk">Қазақша</option><option value="en">English</option></select>
+                    <button id="resetParamsBtn" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i> Сбросить
+                    </button>
+                </div>
+            </div>
+
+            <!-- Навигация по вкладкам -->
+            <nav class="flex space-x-2 border-t border-slate-800/80 pt-2 pb-2 overflow-x-auto text-xs font-semibold">
+                <button class="tab-btn active px-4 py-2 rounded-lg border border-transparent transition flex items-center gap-2 whitespace-nowrap" data-tab="tab-dashboard">
+                    <i class="fa-solid fa-chart-line"></i> 1. Главная Аналитика
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-lg border border-transparent transition flex items-center gap-2 text-slate-400 hover:text-slate-200 whitespace-nowrap" data-tab="tab-sales">
+                    <i class="fa-solid fa-table"></i> 2. История Продаж (МНК)
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-lg border border-transparent transition flex items-center gap-2 text-slate-400 hover:text-slate-200 whitespace-nowrap" data-tab="tab-margin">
+                    <i class="fa-solid fa-calculator"></i> 3. Маржинальный Расчет
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-lg border border-transparent transition flex items-center gap-2 text-slate-400 hover:text-slate-200 whitespace-nowrap" data-tab="tab-simulator">
+                    <i class="fa-solid fa-sliders"></i> 4. Симулятор Рынка
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ==================== СТРАНИЦА 1: ГЛАВНАЯ АНАЛИТИКА (DASHBOARD) ==================== -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-panel-accent rounded-2xl p-5 border border-emerald-500/30 relative overflow-hidden shadow-lg">
+                    <div class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1 flex items-center justify-between">
+                        <span>Идеальная Цена (Optimum)</span>
+                        <i class="fa-solid fa-star text-emerald-400"></i>
+                    </div>
+                    <div id="optimalPriceVal" class="text-3xl font-black text-emerald-400 font-mono">0 ₸</div>
+                    <div class="text-xs text-emerald-300/80 mt-1">Баға мен сұраныс моделіне негізделген есептік баға</div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+                    <div class="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">Прогнозная Выручка (Revenue)</div>
+                    <div id="maxRevenueVal" class="text-2xl font-bold text-white font-mono">0 ₸</div>
+                    <div id="projectedProfitVal" class="text-xs font-semibold text-emerald-400 mt-1">Чистая прибыль: 0 ₸</div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+                    <div class="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">Средняя Цена Продажи</div>
+                    <div id="meanPriceVal" class="text-2xl font-bold text-white font-mono">0 ₸</div>
+                    <div class="text-xs text-slate-400 mt-1">По базовой статистике</div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4 border border-cyan-500/30 bg-gradient-to-r from-cyan-950/30 via-slate-900/80 to-slate-900/80 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                        <i class="fa-solid fa-shield-halved text-2xl"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-300">Табысы максимумнан 3%-дан артық төмендемейтін баға аралығы</div>
+                        <div id="acceptablePriceRange" class="text-xl font-black font-mono text-cyan-400">0 ₸ — 0 ₸</div>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-300 bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/80 max-w-xs text-center sm:text-left">
+                    Бұл аралық модель бойынша есептеледі және нақты нарық деректеріне тәуелді.
+                </div>
+            </div>
+
+            <!-- Формулы модели -->
+            <div class="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
+                <h2 class="font-bold text-cyan-400">Формулы расчёта</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div class="bg-slate-900 rounded-xl p-3"><div class="text-slate-400 text-xs mb-1">Функция спроса</div><div class="font-mono text-lg">Q(p) = a − bp</div></div>
+                    <div class="bg-slate-900 rounded-xl p-3"><div class="text-slate-400 text-xs mb-1">Выручка</div><div class="font-mono text-lg">R(p) = p(a − bp)</div></div>
+                    <div class="bg-slate-900 rounded-xl p-3"><div class="text-slate-400 text-xs mb-1">Общие затраты</div><div class="font-mono text-lg">TC(p) = FC + VC × Q(p)</div></div>
+                    <div class="bg-slate-900 rounded-xl p-3"><div class="text-slate-400 text-xs mb-1">Функция прибыли</div><div class="font-mono text-lg">π(p) = R(p) − TC(p)</div></div>
+                    <div class="bg-slate-900 rounded-xl p-3 md:col-span-2"><div class="text-slate-400 text-xs mb-1">Оптимальная цена (максимум прибыли)</div><div class="font-mono text-lg text-emerald-400">p<sub>opt</sub> = (a + bVC) / (2b)</div></div>
+                </div>
+                <p class="text-xs text-slate-400">a и b определяются методом наименьших квадратов по введённым продажам; VC — себестоимость единицы, FC — постоянные расходы за период. Формула оптимальной цены применима при b &gt; 0 и положительном спросе.</p>
+            </div>
+
+            <!-- Блок графиков -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-200 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-users text-cyan-400"></i> Сұраныс графигі
+                    </h3>
+                    <div class="relative w-full h-64">
+                        <canvas id="demandChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-200 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-wallet text-emerald-400"></i> Пайда графигі
+                    </h3>
+                    <div class="relative w-full h-64">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== СТРАНИЦА 2: ИСТОРИЯ ПРОДАЖ И МНК ==================== -->
+        <section id="tab-sales" class="tab-content hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-cyan-400 flex items-center gap-2">
+                            <i class="fa-solid fa-database"></i> Данные Истории Продаж
+                        </h2>
+                        <p class="text-xs text-slate-400">Введите цены и количество продаж прямо в таблицу. Базовая цена для этого не нужна.</p>
+                    </div>
+                    <button id="addPointBtn" class="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Добавить цену
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-800 rounded-xl">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-900/90 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">№</th>
+                                <th class="p-3">Установленная Цена (₸)</th>
+                                <th class="p-3">Проданный Объём (шт)</th>
+                                <th class="p-3">Общая Выручка (₸)</th>
+                                <th class="p-3 text-right">Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody" class="divide-y divide-slate-800/60 font-mono">
+                            <!-- Заполняется через JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800 space-y-2">
+                    <h3 class="text-xs font-bold text-slate-200">Математический результат метода наименьших квадратов (МНК):</h3>
+                    <div id="olsDetails" class="text-xs font-mono text-cyan-300 leading-relaxed">
+                        --
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== СТРАНИЦА 3: МАРЖИНАЛЬНЫЙ РАСЧЕТ ==================== -->
+        <section id="tab-margin" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Параметры слева -->
+                <div class="lg:col-span-5 glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+                    <h2 class="text-base font-bold text-cyan-400 flex items-center gap-2 border-b border-slate-800 pb-3">
+                        <i class="fa-solid fa-coins"></i> Товар & Себестоимость
+                    </h2>
+                    
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1">Наименование товара</label>
+                            <input type="text" id="productName" value="" placeholder="Введите название товара" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-medium text-slate-300 mb-1">Закуп / Себестоимость (₸)</label>
+                                <input type="text" inputmode="decimal" id="costPrice" value="" placeholder="Введите себестоимость" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-emerald-400 font-bold font-mono">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-300 mb-1">Базовая Рыночная Цена (₸)</label>
+                                <input type="text" inputmode="decimal" id="basePrice" value="" placeholder="Введите рыночную цену" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1">Тұрақты шығындар (₸)</label>
+                            <input type="text" inputmode="decimal" id="fixedCost" value="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono" aria-label="Тұрақты шығындар">
+                            <p class="text-[10px] text-slate-500 mt-1">Мысалы: жалға алу немесе тұрақты төлемдер.</p>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1">Категория Товара</label>
+                            <select id="category" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                                <option value="food" selected>Еда и Напитки (Высокая эластичность)</option>
+                                <option value="services">Услуги и Аренда (Средняя)</option>
+                                <option value="electronics">Электроника (Стабильная)</option>
+                                <option value="fashion">Одежда и Бренды (Низкая эластичность)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Аналитика маржи справа -->
+                <div class="lg:col-span-7 glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+                    <h2 class="text-base font-bold text-emerald-400 flex items-center gap-2 border-b border-slate-800 pb-3">
+                        <i class="fa-solid fa-chart-pie"></i> Маржинальная Структура
+                    </h2>
+                    
+                    <div id="fixedCostExplanation" class="text-xs text-slate-400"></div>
+                    <div class="grid grid-cols-2 gap-4 font-mono text-xs">
+                        <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 block text-[10px]">ЧИСТАЯ ПРИБЫЛЬ С ЕДИНИЦЫ</span>
+                            <span id="unitProfitVal" class="text-xl font-bold text-emerald-400">0 ₸</span>
+                        </div>
+                        <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 block text-[10px]">МАРЖИНАЛЬНАЯ РЕНТАБЕЛЬНОСТЬ</span>
+                            <span id="marginPercentVal" class="text-xl font-bold text-cyan-400">0 %</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 space-y-3 text-xs">
+                        <div class="flex justify-between items-center text-slate-300">
+                            <span>Наценка на товар (Mark-up):</span>
+                            <span id="markupVal" class="font-bold font-mono text-emerald-400">0 %</span>
+                        </div>
+                        <div class="flex justify-between items-center text-slate-300">
+                            <span>Точка Безубыточности (Break-Even Volume):</span>
+                            <span id="breakEvenVal" class="font-bold font-mono text-cyan-400">0 шт</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== СТРАНИЦА 4: СИМУЛЯТОР РЫНКА ==================== -->
+        <section id="tab-simulator" class="tab-content hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-6">
+                <div class="border-b border-slate-800 pb-3">
+                    <h2 class="text-base font-bold text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-earth-asia"></i> Рыночный и Региональный Симулятор
+                    </h2>
+                    <p class="text-xs text-slate-400">Отслеживание влияния города, погоды и сезонных факторов на цену и спрос</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1">Регион Бизнеса / Город</label>
+                            <select id="location" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                                <option value="aktau" selected>Актау (Мангистау / Прибрежная зона)</option>
+                                <option value="almaty">Алматы (Мегаполис / Высокий спрос)</option>
+                                <option value="astana">Астана (Столица / Высокий чек)</option>
+                                <option value="shymkent">Шымкент (Южный мегаполис)</option>
+                                <option value="karaganda">Караганда</option>
+                                <option value="atyrau">Атырау (Нефтяной регион)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1">День Недели</label>
+                            <select id="dayOfWeek" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                                <option value="weekday" selected>Будние дни (Средний спрос)</option>
+                                <option value="weekend">Выходные дни (+15% к спросу)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1">Погодные Условия</label>
+                            <select id="weather" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                                <option value="clear" selected>Обычная / Ясная погода</option>
+                                <option value="rainy">Дождь / Сильный ветер</option>
+                                <option value="hot">Жаркий день (Побережье)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1">Время Года (Сезон)</label>
+                            <select id="season" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                                <option value="regular" selected>Обычный сезон</option>
+                                <option value="peak">Высокий сезон / Разгар (+25%)</option>
+                                <option value="offpeak">Низкий сезон / Низкий спрос</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-900/80 rounded-xl border border-cyan-500/20 text-xs text-slate-300 space-y-2">
+                    <span class="font-bold text-cyan-400 block">Коэффициент Симуляции:</span>
+                    <p id="simulationOutput">При изменении параметров алгоритм автоматически пересчитывает кривую спроса и корректирует оптимальную цену.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+
+        const translations = {"Сбросить": {"ru": "Сбросить", "kk": "Тазалау", "en": "Reset"}, "1. Главная Аналитика": {"ru": "1. Главная аналитика", "kk": "1. Негізгі талдау", "en": "1. Dashboard"}, "2. История Продаж (МНК)": {"ru": "2. История продаж (МНК)", "kk": "2. Сату тарихы (ЕКӘ)", "en": "2. Sales history (OLS)"}, "3. Маржинальный Расчет": {"ru": "3. Маржинальный расчёт", "kk": "3. Маржиналдық есеп", "en": "3. Margin analysis"}, "4. Симулятор Рынка": {"ru": "4. Симулятор рынка", "kk": "4. Нарық симуляторы", "en": "4. Market simulator"}, "Идеальная Цена (Optimum)": {"ru": "Оптимальная цена", "kk": "Оңтайлы баға", "en": "Optimal price"}, "Прогнозная Выручка (Revenue)": {"ru": "Прогноз выручки", "kk": "Болжамды түсім", "en": "Projected revenue"}, "Средняя Цена Продажи": {"ru": "Средняя цена продажи", "kk": "Орташа сату бағасы", "en": "Average selling price"}, "По базовой статистике": {"ru": "По данным модели", "kk": "Модель деректері бойынша", "en": "Based on model data"}, "Сұраныс графигі": {"ru": "График спроса", "kk": "Сұраныс графигі", "en": "Demand chart"}, "Пайда графигі": {"ru": "График прибыли", "kk": "Пайда графигі", "en": "Profit chart"}, "Данные Истории Продаж": {"ru": "История продаж", "kk": "Сату тарихы", "en": "Sales history"}, "Введите реальный опыт продаж или отредактируйте таблицу": {"ru": "Введите данные продаж в таблицу", "kk": "Сату деректерін кестеге енгізіңіз", "en": "Enter your sales data"}, "Добавить цену": {"ru": "Добавить строку", "kk": "Жол қосу", "en": "Add row"}, "Установленная Цена (₸)": {"ru": "Цена (₸)", "kk": "Баға (₸)", "en": "Price (₸)"}, "Проданный Объём (шт)": {"ru": "Продано (шт.)", "kk": "Сатылған (дана)", "en": "Units sold"}, "Общая Выручка (₸)": {"ru": "Выручка (₸)", "kk": "Түсім (₸)", "en": "Revenue (₸)"}, "Действие": {"ru": "Действие", "kk": "Әрекет", "en": "Action"}, "Математический результат метода наименьших квадратов (МНК):": {"ru": "Результат метода наименьших квадратов:", "kk": "Ең кіші квадраттар әдісінің нәтижесі:", "en": "Ordinary least squares result:"}, "Товар & Себестоимость": {"ru": "Товар и себестоимость", "kk": "Тауар және өзіндік құн", "en": "Product and costs"}, "Наименование товара": {"ru": "Название товара", "kk": "Тауар атауы", "en": "Product name"}, "Закуп / Себестоимость (₸)": {"ru": "Себестоимость (₸)", "kk": "Өзіндік құн (₸)", "en": "Unit cost (₸)"}, "Базовая Рыночная Цена (₸)": {"ru": "Рыночная цена (₸)", "kk": "Нарық бағасы (₸)", "en": "Market price (₸)"}, "Тұрақты шығындар (₸)": {"ru": "Постоянные расходы (₸)", "kk": "Тұрақты шығындар (₸)", "en": "Fixed costs (₸)"}, "Мысалы: жалға алу немесе тұрақты төлемдер.": {"ru": "Например: аренда и постоянные платежи.", "kk": "Мысалы: жалға алу немесе тұрақты төлемдер.", "en": "For example: rent and other fixed expenses."}, "Категория Товара": {"ru": "Категория товара", "kk": "Тауар санаты", "en": "Product category"}, "Маржинальная Структура": {"ru": "Маржинальная структура", "kk": "Маржиналдық құрылым", "en": "Margin breakdown"}, "ЧИСТАЯ ПРИБЫЛЬ С ЕДИНИЦЫ": {"ru": "ПРИБЫЛЬ С ЕДИНИЦЫ ДО ПОСТОЯННЫХ РАСХОДОВ", "kk": "ТҰРАҚТЫ ШЫҒЫНҒА ДЕЙІНГІ БІРЛІК ПАЙДАСЫ", "en": "UNIT CONTRIBUTION MARGIN"}, "МАРЖИНАЛЬНАЯ РЕНТАБЕЛЬНОСТЬ": {"ru": "МАРЖИНАЛЬНАЯ РЕНТАБЕЛЬНОСТЬ", "kk": "МАРЖИНАЛДЫҚ РЕНТАБЕЛЬДІЛІК", "en": "CONTRIBUTION MARGIN %"}, "Наценка на товар (Mark-up):": {"ru": "Наценка на товар:", "kk": "Тауар үстемесі:", "en": "Markup:"}, "Точка Безубыточности (Break-Even Volume):": {"ru": "Точка безубыточности:", "kk": "Залалсыздық нүктесі:", "en": "Break-even volume:"}, "Рыночный и Региональный Симулятор": {"ru": "Рыночный и региональный симулятор", "kk": "Нарық және аймақ симуляторы", "en": "Market and regional simulator"}, "Регион Бизнеса / Город": {"ru": "Город / регион", "kk": "Қала / аймақ", "en": "City / region"}, "День Недели": {"ru": "День недели", "kk": "Апта күні", "en": "Day of week"}, "Погодные Условия": {"ru": "Погода", "kk": "Ауа райы", "en": "Weather"}, "Время Года (Сезон)": {"ru": "Сезон", "kk": "Маусым", "en": "Season"}, "Коэффициент Симуляции:": {"ru": "Параметры симуляции:", "kk": "Симуляция параметрлері:", "en": "Simulation parameters:"}, "Еда и Напитки (Высокая эластичность)": {"ru": "Еда и напитки", "kk": "Тамақ және сусын", "en": "Food and drinks"}, "Услуги и Аренда (Средняя)": {"ru": "Услуги и аренда", "kk": "Қызметтер және жалға алу", "en": "Services and rent"}, "Электроника (Стабильная)": {"ru": "Электроника", "kk": "Электроника", "en": "Electronics"}, "Одежда и Бренды (Низкая эластичность)": {"ru": "Одежда и бренды", "kk": "Киім және брендтер", "en": "Fashion and brands"}, "Актау (Мангистау / Прибрежная зона)": {"ru": "Актау", "kk": "Ақтау", "en": "Aktau"}, "Алматы (Мегаполис / Высокий спрос)": {"ru": "Алматы", "kk": "Алматы", "en": "Almaty"}, "Астана (Столица / Высокий чек)": {"ru": "Астана", "kk": "Астана", "en": "Astana"}, "Шымкент (Южный мегаполис)": {"ru": "Шымкент", "kk": "Шымкент", "en": "Shymkent"}, "Караганда": {"ru": "Караганда", "kk": "Қарағанды", "en": "Karaganda"}, "Атырау (Нефтяной регион)": {"ru": "Атырау", "kk": "Атырау", "en": "Atyrau"}, "Будние дни (Средний спрос)": {"ru": "Будни", "kk": "Жұмыс күндері", "en": "Weekdays"}, "Выходные дни (+15% к спросу)": {"ru": "Выходные (+15%)", "kk": "Демалыс күндері (+15%)", "en": "Weekend (+15%)"}, "Обычная / Ясная погода": {"ru": "Ясно", "kk": "Ашық", "en": "Clear"}, "Дождь / Сильный ветер": {"ru": "Дождь / ветер", "kk": "Жаңбыр / жел", "en": "Rain / wind"}, "Жаркий день (Побережье)": {"ru": "Жарко", "kk": "Ыстық", "en": "Hot"}, "Обычный сезон": {"ru": "Обычный сезон", "kk": "Қалыпты маусым", "en": "Regular season"}, "Высокий сезон / Разгар (+25%)": {"ru": "Высокий сезон (+25%)", "kk": "Жоғары маусым (+25%)", "en": "Peak season (+25%)"}, "Низкий сезон / Низкий спрос": {"ru": "Низкий сезон", "kk": "Төмен маусым", "en": "Off-peak season"}, "Баға мен сұраныс моделіне негізделген есептік баға": {"ru": "Расчёт по модели спроса", "kk": "Сұраныс моделіне негізделген баға", "en": "Calculated from demand model"}, "Табысы максимумнан 3%-дан артық төмендемейтін баға аралығы": {"ru": "Диапазон цен с прибылью не ниже 97% максимума", "kk": "Пайда максимумның 97%-ынан кем емес баға аралығы", "en": "Price range within 3% of maximum profit"}, "Бұл аралық модель бойынша есептеледі және нақты нарық деректеріне тәуелді.": {"ru": "Диапазон зависит от введённых данных.", "kk": "Аралық енгізілген деректерге тәуелді.", "en": "Range depends on entered data."}, "Отслеживание влияния города, погоды и сезонных факторов на цену и спрос": {"ru": "Влияние города, погоды и сезона на спрос", "kk": "Қала, ауа райы және маусымның сұранысқа әсері", "en": "Effect of location, weather and season on demand"}, "При изменении параметров алгоритм автоматически пересчитывает кривую спроса и корректирует оптимальную цену.": {"ru": "Параметры влияют на предварительную модель спроса.", "kk": "Параметрлер алдын ала сұраныс моделіне әсер етеді.", "en": "Parameters affect the preliminary demand model."}, "Баға, сұраныс және пайда көрсеткіштерін модельдеу": {"ru": "Моделирование цены, спроса и прибыли", "kk": "Баға, сұраныс және пайданы модельдеу", "en": "Price, demand and profit modeling"}, "4 Страницы Аналитики": {"ru": "4 раздела", "kk": "4 бөлім", "en": "4 sections"}};
+         // Formula labels are translated separately; mathematical notation stays universal.
+         const formulaTranslations = {
+             ru: ['Формулы расчёта','Функция спроса','Выручка','Общие затраты','Функция прибыли','Оптимальная цена (максимум прибыли)','a и b определяются методом наименьших квадратов по введённым продажам; VC — себестоимость единицы, FC — постоянные расходы за период. Формула оптимальной цены применима при b > 0 и положительном спросе.'],
+             kk: ['Есептеу формулалары','Сұраныс функциясы','Түсім','Жалпы шығындар','Пайда функциясы','Оңтайлы баға (пайданың максимумы)','a және b енгізілген сатылым деректері бойынша ең кіші квадраттар әдісімен анықталады; VC — бірлік өнімнің өзіндік құны, FC — кезеңдегі тұрақты шығындар. Оңтайлы баға формуласы b > 0 және сұраныс оң болғанда қолданылады.'],
+             en: ['Calculation formulas','Demand function','Revenue','Total costs','Profit function','Optimal price (maximum profit)','a and b are estimated using ordinary least squares on the entered sales data; VC is unit variable cost and FC is fixed costs for the period. The optimal price formula applies when b > 0 and demand is positive.']
+         };
+         function translateFormulas() {
+             const lang = document.getElementById('languageSelect').value;
+             const section = document.querySelector('#tab-dashboard .glass-panel.rounded-2xl.p-5.border.border-slate-800.space-y-3');
+             if (!section) return;
+             const labels = [section.querySelector('h2'), ...section.querySelectorAll('.grid .text-slate-400.text-xs.mb-1'), section.querySelector('p.text-xs')];
+             labels.forEach((el, i) => { if (el) el.textContent = formulaTranslations[lang][i]; });
+         }
+        const uiTextNodes = [];
+        function collectTranslations() {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walker.nextNode())) {
+                if (node.parentElement && ['SCRIPT','STYLE'].includes(node.parentElement.tagName)) continue;
+                const key = node.nodeValue.trim();
+                if (translations[key]) uiTextNodes.push({node, key});
+            }
+        }
+        const notes = {
+            ru: {fixedNote:'Постоянные расходы за период:', profitNote:'Прогноз чистой прибыли после этих расходов:', profit:'Прогноз чистой прибыли:', model:'Модель спроса:', points:'Точек:', optimal:'Оптимальная цена:', demand:'Прогноз спроса:', revenue:'Выручка:', net:'Прибыль после постоянных расходов:', need:'Для расчёта нужны как минимум две разные цены и убывающий спрос.', range:'Невозможно рассчитать'},
+            kk: {fixedNote:'Кезеңдегі тұрақты шығындар:', profitNote:'Осы шығындардан кейінгі болжамды таза пайда:', profit:'Болжамды таза пайда:', model:'Сұраныс моделі:', points:'Нүктелер:', optimal:'Оңтайлы баға:', demand:'Болжамды сұраныс:', revenue:'Түсім:', net:'Тұрақты шығындардан кейінгі пайда:', need:'Есептеу үшін кемінде екі түрлі баға және төмендейтін сұраныс қажет.', range:'Есептеу мүмкін емес'},
+            en: {fixedNote:'Fixed costs per period:', profitNote:'Projected net profit after fixed costs:', profit:'Projected net profit:', model:'Demand model:', points:'Data points:', optimal:'Optimal price:', demand:'Forecast demand:', revenue:'Revenue:', net:'Profit after fixed costs:', need:'At least two distinct prices with decreasing demand are needed.', range:'Cannot calculate'}
+        };
+        function t(key) {return (notes[document.getElementById('languageSelect').value] || notes.ru)[key] || key;}
+        function translateUI() {
+            const lang = document.getElementById('languageSelect').value;
+            document.documentElement.lang = lang === 'kk' ? 'kk' : lang;
+            uiTextNodes.forEach(({node,key}) => { if(node.isConnected) node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), translations[key][lang]); });
+             translateFormulas();
+             const dynamic = document.getElementById('projectedProfitVal');
+            if (dynamic) dynamic.textContent = dynamic.textContent.replace(/^(Болжамды таза пайда:|Прогноз чистой прибыли:|Projected net profit:)/, t('profit'));
+            const note = document.getElementById('fixedCostExplanation');
+            if(note) { const fc = Number(document.getElementById('fixedCost').value.replace(',','.')) || 0; const profit = window.latestNetProfit || 0; note.textContent = t('fixedNote')+' '+formatKZT(fc)+'. '+t('profitNote')+' '+formatKZT(profit)+'.'; }
+        }
+
+        const CITY_FACTORS = {
+            aktau: { name: "Актау", factor: 1.15 },
+            almaty: { name: "Алматы", factor: 1.25 },
+            astana: { name: "Астана", factor: 1.25 },
+            shymkent: { name: "Шымкент", factor: 1.10 },
+            karaganda: { name: "Караганда", factor: 1.00 },
+            atyrau: { name: "Атырау", factor: 1.20 }
+        };
+
+        const DEFAULT_POINT_OFFSETS = [
+            { priceRatio: 0.75, demandBase: 140 },
+            { priceRatio: 0.88, demandBase: 115 },
+            { priceRatio: 1.00, demandBase: 95 },
+            { priceRatio: 1.12, demandBase: 70 },
+            { priceRatio: 1.25, demandBase: 45 }
+        ];
+
+        // Пустые строки доступны сразу, без предварительного ввода базовой цены.
+        let activePoints = Array.from({length: 5}, () => ({ P: '', Q: '' }));
+        let demandChartInstance = null;
+        let revenueChartInstance = null;
+
+        function formatKZT(amount) {
+            return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(amount)) + ' ₸';
+        }
+
+        // Переключение вкладок
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active', 'text-cyan-400');
+                    b.classList.add('text-slate-400');
+                });
+                btn.classList.add('active');
+                btn.classList.remove('text-slate-400');
+
+                const targetTab = btn.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+                document.getElementById(targetTab).classList.remove('hidden');
+            });
+        });
+
+        // МНК: оцениваем Q = intercept + slope * P.
+        // Для обычной нисходящей кривой спроса slope должен быть отрицательным.
+        function calculateOLS(points) {
+            const validPoints = points.filter(pt =>
+                Number.isFinite(pt.P) && Number.isFinite(pt.Q) && pt.P >= 0 && pt.Q >= 0
+            );
+            const N = validPoints.length;
+            if (N < 2) return { intercept: 0, slope: 0, N, valid: false };
+
+            const sumP = validPoints.reduce((s, pt) => s + pt.P, 0);
+            const sumQ = validPoints.reduce((s, pt) => s + pt.Q, 0);
+            const sumPQ = validPoints.reduce((s, pt) => s + pt.P * pt.Q, 0);
+            const sumP2 = validPoints.reduce((s, pt) => s + pt.P * pt.P, 0);
+            const denominator = N * sumP2 - sumP * sumP;
+
+            if (Math.abs(denominator) < 1e-9) {
+                return { intercept: 0, slope: 0, N, valid: false };
+            }
+
+            const slope = (N * sumPQ - sumP * sumQ) / denominator;
+            const intercept = (sumQ - slope * sumP) / N;
+            return {
+                intercept,
+                slope,
+                N,
+                valid: Number.isFinite(intercept) && Number.isFinite(slope)
+            };
+        }
+
+        function getComputedPoints() {
+            return activePoints.filter(pt => pt.P !== '' && pt.Q !== '' &&
+                Number.isFinite(Number(pt.P)) && Number.isFinite(Number(pt.Q)) &&
+                Number(pt.P) >= 0 && Number(pt.Q) >= 0)
+                .map(pt => ({ P: Number(pt.P), Q: Number(pt.Q) }));
+        }
+
+        // Если история ещё не введена, строим явно модельный сценарий по базовой цене.
+        // Исторические продажи никогда не подменяются модельными данными в таблице.
+        function getAnalysisPoints() {
+            const actual = getComputedPoints();
+            if (actual.length > 0) return { points: actual, estimated: false };
+            const base = Number(String(document.getElementById('basePrice').value).replace(',', '.'));
+            if (!Number.isFinite(base) || base <= 0) return { points: [], estimated: false };
+            const city = CITY_FACTORS[document.getElementById('location').value] || CITY_FACTORS.aktau;
+            const category = document.getElementById('category').value;
+            const elasticity = {food: 1.2, services: 1, electronics: .95, fashion: .8}[category] || 1;
+            let shift = 1;
+            if (document.getElementById('dayOfWeek').value === 'weekend') shift += .15;
+            if (document.getElementById('weather').value === 'rainy') shift += .20;
+            if (document.getElementById('weather').value === 'hot') shift += .15;
+            if (document.getElementById('season').value === 'peak') shift += .25;
+            if (document.getElementById('season').value === 'offpeak') shift -= .15;
+            return { estimated: true, points: DEFAULT_POINT_OFFSETS.map(item => ({
+                P: Math.round(item.priceRatio * base * city.factor),
+                Q: Math.max(0, Math.round(item.demandBase * (1 - (item.priceRatio - 1) * elasticity) * shift))
+            })) };
+        }
+
+        function renderTable(points) {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
+            points.forEach((pt, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/50 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-sans font-medium text-slate-500">#${index + 1}</td>
+                    <td class="p-3">
+                        <input type="text" inputmode="decimal" value="${pt.P}" placeholder="Цена" data-index="${index}" class="point-p-input w-28 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-cyan-400 font-mono">
+                    </td>
+                    <td class="p-3">
+                        <input type="text" inputmode="numeric" value="${pt.Q}" placeholder="Шт." data-index="${index}" class="point-q-input w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono">
+                    </td>
+                    <td class="p-3 text-emerald-400 font-bold">${pt.P !== '' && pt.Q !== '' ? formatKZT(Number(pt.P) * Number(pt.Q)) : '—'}</td>
+                    <td class="p-3 text-right">
+                        ${points.length > 1 ? `<button data-index="${index}" class="delete-point-btn text-slate-500 hover:text-red-400 transition p-1"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            ['P', 'Q'].forEach(field => {
+                const selector = field === 'P' ? '.point-p-input' : '.point-q-input';
+                document.querySelectorAll(selector).forEach(input => {
+                    input.addEventListener('input', e => {
+                        const idx = Number(e.target.dataset.index);
+                        activePoints[idx][field] = e.target.value;
+                        const row = e.target.closest('tr');
+                        const {P, Q} = activePoints[idx];
+                        row.children[3].textContent = P !== '' && Q !== '' ? formatKZT(Number(P) * Number(Q)) : '—';
+                        updateDashboard(false);
+                    });
+                });
+            });
+
+            document.querySelectorAll('.delete-point-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activePoints.splice(parseInt(btn.dataset.index), 1);
+                    updateDashboard(true);
+                });
+            });
+        }
+
+        function updateDashboard(shouldRebuildTable = true) {
+            const { points, estimated } = getAnalysisPoints();
+            const costPrice = Math.max(0, Number(String(document.getElementById('costPrice').value).replace(',', '.')) || 0);
+            const fixedCost = Math.max(0, parseFloat(document.getElementById('fixedCost')?.value) || 0);
+
+            if (shouldRebuildTable) renderTable(activePoints);
+
+            const { intercept: a, slope, N, valid } = calculateOLS(points);
+            const b = -slope; // Q(p) = a - b*p; b > 0 means demand decreases as price rises.
+
+            const meanP = points.length
+                ? points.reduce((acc, pt) => acc + pt.P, 0) / points.length
+                : 0;
+            document.getElementById('meanPriceVal').textContent = formatKZT(meanP);
+
+            let pOpt = 0, qOpt = 0, projectedRev = 0, maxProfit = 0;
+            let modelMessage = estimated ? 'Модельный сценарий (не реальные продажи). ' : '';
+
+            if (valid && a > 0 && b > 0) {
+                const chokePrice = a / b; // price at which modeled demand reaches zero
+                const unconstrainedOptimum = (a + b * costPrice) / (2 * b); // p_opt = (a + b*VC)/(2b)
+                pOpt = Math.max(costPrice, unconstrainedOptimum);
+                if (costPrice < chokePrice) {
+                    pOpt = Math.min(pOpt, chokePrice);
+                } else {
+                    pOpt = costPrice;
+                }
+
+                qOpt = Math.max(0, a - b * pOpt);
+                projectedRev = pOpt * qOpt;
+                maxProfit = projectedRev - (fixedCost + costPrice * qOpt); // π(p) = R(p) − TC(p)
+                modelMessage += `Сұраныс моделі: Q(p) = ${a.toFixed(2)} − ${b.toFixed(4)} × p.`;
+            } else {
+                modelMessage += 'Оңтайлы бағаны есептеу үшін баға мен сұраныс арасында төмендейтін сызықтық байланыс қажет. Сатылым деректерін тексеріңіз.';
+            }
+
+            document.getElementById('optimalPriceVal').textContent = formatKZT(pOpt);
+            document.getElementById('maxRevenueVal').textContent = formatKZT(projectedRev);
+            document.getElementById('projectedProfitVal').textContent = `${t("profit")} ${formatKZT(maxProfit)}`;
+
+            // Баға аралығы: модельдік пайданың максимумынан 3%-дан артық төмендемейтін аралық.
+            let rangeText = t('range');
+            if (valid && a > 0 && b > 0 && maxProfit > 0) {
+                const chokePrice = a / b;
+                const threshold = maxProfit * 0.97;
+                const steps = 1000;
+                const low = Math.max(costPrice, 0);
+                const high = Math.max(low, chokePrice);
+                const step = (high - low) / steps;
+                const acceptable = [];
+                for (let i = 0; i <= steps; i++) {
+                    const price = low + i * step;
+                    const quantity = Math.max(0, a - b * price);
+                    const profit = price * quantity - (fixedCost + costPrice * quantity);
+                    if (profit >= threshold) acceptable.push(price);
+                }
+                if (acceptable.length) {
+                    rangeText = `${formatKZT(acceptable[0])} — ${formatKZT(acceptable[acceptable.length - 1])}`;
+                } else {
+                    rangeText = t('range');
+                }
+            }
+            document.getElementById('acceptablePriceRange').textContent = rangeText;
+
+            // Маржа, үстеме баға және залалсыздық нүктесі.
+            const unitProfit = pOpt - costPrice;
+            const marginPercent = pOpt > 0 ? (unitProfit / pOpt) * 100 : 0;
+            const markup = costPrice > 0 ? (unitProfit / costPrice) * 100 : 0;
+            const contribution = pOpt - costPrice;
+            const breakEven = contribution > 0
+                ? Math.ceil(fixedCost / contribution)
+                : (fixedCost === 0 ? 0 : null);
+
+            document.getElementById('unitProfitVal').textContent = formatKZT(unitProfit);
+            document.getElementById('marginPercentVal').textContent = marginPercent.toFixed(1) + ' %';
+            document.getElementById('markupVal').textContent = markup.toFixed(1) + ' %';
+            document.getElementById('breakEvenVal').textContent =
+                breakEven === null ? t('range') : `${breakEven} шт`;
+
+            document.getElementById('olsDetails').innerHTML = `
+                ${modelMessage}<br>
+                ${t("points")} <strong>${N || 0}</strong><br>
+                ${t("optimal")} <strong>${formatKZT(pOpt)}</strong><br>
+                ${t("demand")} <strong>${qOpt.toFixed(1)} дана</strong><br>
+                ${t("revenue")} <strong>${formatKZT(projectedRev)}</strong><br>
+                ${t("net")} <strong>${formatKZT(maxProfit)}</strong>
+            `;
+
+            window.latestNetProfit = maxProfit;
+            document.getElementById("fixedCostExplanation").textContent = t("fixedNote") + " " + formatKZT(fixedCost) + ". " + t("profitNote") + " " + formatKZT(maxProfit) + ".";
+            renderCharts(points, a, b, pOpt, maxProfit, costPrice, fixedCost, valid);
+            translateUI();
+        }
+
+        function renderCharts(points, a, b, pOpt, maxProfit, costPrice, fixedCost = 0, modelValid = true) {
+            const pointPrices = points.map(pt => pt.P).filter(Number.isFinite);
+            const maxP = Math.max(...pointPrices, pOpt * 1.4, 100);
+            const sampleCount = 80;
+            const step = maxP / sampleCount;
+            const demandLineData = [];
+            const profitCurveData = [];
+
+            for (let i = 0; i <= sampleCount; i++) {
+                const P = i * step;
+                const Q = modelValid ? Math.max(0, a - b * P) : 0;
+                demandLineData.push({ x: P, y: Q });
+                profitCurveData.push({ x: P, y: P * Q - (fixedCost + costPrice * Q) });
+            }
+
+            if (typeof Chart === 'undefined') return;
+            const ctxDemand = document.getElementById('demandChart').getContext('2d');
+            if (demandChartInstance) demandChartInstance.destroy();
+
+            demandChartInstance = new Chart(ctxDemand, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Енгізілген деректер', data: points.map(pt => ({ x: pt.P, y: pt.Q })), backgroundColor: '#00b5e2', pointRadius: 6 },
+                        { type: 'line', label: 'МНК сұраныс сызығы', data: demandLineData, borderColor: '#10b981', borderWidth: 2, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: 'Баға (₸)', color: '#94a3b8' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(51, 65, 85, 0.3)' } },
+                        y: { title: { display: true, text: 'Сұраныс (дана)', color: '#94a3b8' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(51, 65, 85, 0.3)' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+            if (revenueChartInstance) revenueChartInstance.destroy();
+
+            revenueChartInstance = new Chart(ctxRevenue, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        { label: 'Таза пайда', data: profitCurveData, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0 },
+                        { label: 'Оңтайлы нүкте', data: [{ x: pOpt, y: maxProfit }], backgroundColor: '#10b981', pointRadius: 8, showLine: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: 'Баға (₸)', color: '#94a3b8' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(51, 65, 85, 0.3)' } },
+                        y: { title: { display: true, text: 'Пайда (₸)', color: '#94a3b8' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(51, 65, 85, 0.3)' } }
+                    }
+                }
+            });
+        }
+
+        window.onload = function() {
+            collectTranslations();
+            document.getElementById("languageSelect").addEventListener("change", () => { translateUI(); updateDashboard(false); });
+            const inputs = ['productName', 'costPrice', 'fixedCost', 'basePrice', 'location', 'category', 'dayOfWeek', 'weather', 'season'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', () => updateDashboard(true));
+                    el.addEventListener('change', () => updateDashboard(true));
+                }
+            });
+
+            document.getElementById('addPointBtn').addEventListener('click', () => {
+                activePoints.push({ P: '', Q: '' });
+                updateDashboard(true);
+            });
+
+            document.getElementById('resetParamsBtn').addEventListener('click', () => {
+                activePoints = Array.from({length: 5}, () => ({ P: '', Q: '' }));
+                document.getElementById('productName').value = '';
+                document.getElementById('costPrice').value = '';
+                document.getElementById('fixedCost').value = '0';
+                document.getElementById('basePrice').value = '';
+                document.getElementById('location').value = 'aktau';
+                document.getElementById('category').value = 'food';
+                document.getElementById('dayOfWeek').value = 'weekday';
+                document.getElementById('weather').value = 'clear';
+                document.getElementById('season').value = 'regular';
+                updateDashboard(true);
+            });
+
+            updateDashboard(true);
+        };
+    </script>
+</body>
+</html>
